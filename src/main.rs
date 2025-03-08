@@ -68,8 +68,27 @@ async fn main() {
 
     let mut spawn_timer: f32 = 1.0;
     let mut game_over: bool = false;
+    let mut paused: bool = false;
 
     loop {
+        if paused {
+            clear_background(RED);
+            let paused_text = "Paused. Press [ESCAPE] to resume.";
+            let text_size = measure_text(paused_text, None, 40.0 as _, 1.0);
+            draw_text(
+                paused_text,
+                screen_width() / 2.0 - text_size.width / 2.0,
+                screen_height() / 2.0 - text_size.height / 2.0,
+                40.0,
+                WHITE,
+            );
+            if is_key_pressed(KeyCode::Escape) {
+                paused = false;
+            }
+            next_frame().await;
+            continue;
+        }
+
         if game_over {
             clear_background(RED);
             let game_over_text = "Game Over! Press [ENTER] to continue";
@@ -121,6 +140,10 @@ async fn main() {
             // shoot projectile
             if is_key_pressed(KeyCode::Space) {
                 projectile_vec.push(spawn_projectile(&player_rect));
+            }
+
+            if is_key_pressed(KeyCode::Escape) {
+                paused = true;
             }
         }
 
