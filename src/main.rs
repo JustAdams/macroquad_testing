@@ -18,18 +18,48 @@ impl Rectangle {
     }
 }
 
-#[macroquad::main("MyGame")]
-async fn main() {
+const PLAYER_SPEED: f32 = 250.0;
+const PROJECTILE_SPEED: f32 = 400.0;
+const ENEMY_SPEED: f32 = 200.0;
 
-    // player creation
-    let mut player_rect = Rectangle {
-        pos: Vec2::new(screen_width() / 2.0, screen_height() - 100.0),
+fn setup_player() -> Rectangle {
+    Rectangle {
+        pos: Vec2::new((screen_width() / 2.0) - 30.0, screen_height() - 100.0),
         velocity: Vec2::new(0.0, 0.0),
         color: GREEN,
-        speed: 10.0,
+        speed: PLAYER_SPEED,
         size: 60.0,
         destroy: false,
-    };
+    }
+}
+
+fn setup_enemy() -> Rectangle {
+    let x_start = random_range(0.0..screen_width());
+    Rectangle {
+        pos: Vec2::new(x_start, 0.0),
+        velocity: Vec2::new(0.0, 1.0),
+        color: GREEN,
+        speed: ENEMY_SPEED,
+        size: 30.0,
+        destroy: false,
+    }
+}
+
+fn spawn_projectile(player_rect: &Rectangle) -> Rectangle {
+    Rectangle {
+        pos: player_rect.pos + (player_rect.size / 3.0),
+        velocity: Vec2::new(0.0, -1.0),
+        color: YELLOW,
+        speed: PROJECTILE_SPEED,
+        size: 25.0,
+        destroy: false,
+    }
+}
+
+#[macroquad::main("MyGame")]
+async fn main() {
+    // player creation
+    let mut player_rect = setup_player();
 
     let mut score: i32 = 0;
 
@@ -53,6 +83,10 @@ async fn main() {
             );
             if is_key_down(KeyCode::Enter) {
                 game_over = false;
+                player_rect = setup_player();
+                enemy_vec.clear();
+                projectile_vec.clear();
+                score = 0;
             }
             next_frame().await;
             continue;
@@ -65,16 +99,7 @@ async fn main() {
         // spawn enemies
         spawn_timer -= get_frame_time();
         if spawn_timer <= 0.0 {
-            let x_start = random_range(0.0..screen_width());
-
-            enemy_vec.push(Rectangle {
-                pos: Vec2::new(x_start, 0.0),
-                velocity: Vec2::new(0.0, 1.0),
-                color: GREEN,
-                speed: 5.0,
-                size: 30.0,
-                destroy: false,
-            });
+            enemy_vec.push(setup_enemy());
             spawn_timer = 1.0;
         }
 
@@ -95,14 +120,7 @@ async fn main() {
 
             // shoot projectile
             if is_key_pressed(KeyCode::Space) {
-                projectile_vec.push(Rectangle {
-                    pos: player_rect.pos + (player_rect.size / 3.0),
-                    velocity: Vec2::new(0.0, -1.0),
-                    color: YELLOW,
-                    speed: 5.0,
-                    size: 25.0,
-                    destroy: false,
-                });
+                projectile_vec.push(spawn_projectile(&player_rect));
             }
         }
 
@@ -151,6 +169,6 @@ async fn main() {
         enemy_vec.retain(|enemy| !enemy.destroy);
         projectile_vec.retain(|projectile| !projectile.destroy);
 
-        next_frame().await
+        next_frame().await;
     }
 }
