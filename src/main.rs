@@ -14,12 +14,13 @@ impl Rectangle {
         draw_rectangle(self.pos.x, self.pos.y, self.size, self.size, self.color);
     }
     fn move_rectangle(&mut self) {
-        self.pos += self.velocity * self.speed;
+        self.pos += self.velocity * self.speed * get_frame_time();
     }
 }
 
 #[macroquad::main("MyGame")]
 async fn main() {
+
     // player creation
     let mut player_rect = Rectangle {
         pos: Vec2::new(screen_width() / 2.0, screen_height() - 100.0),
